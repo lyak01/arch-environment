@@ -1,0 +1,9 @@
+# Prioridad: repos oficiales > AUR binario > AUR fuente > omitir
+# --- Repositorios oficiales ---
+i3-wm
+i3status
+rofi
+picom
+kitty
+xorg-server
+xorg-xinit

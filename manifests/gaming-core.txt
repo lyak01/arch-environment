@@ -1,1 +1,13 @@
-# Paquetes gaming núcleo (a definir)
+# Prioridad: repos oficiales > AUR binario > AUR fuente > omitir
+# --- Repositorios oficiales ---
+steam
+lutris
+wine
+winetricks
+mangohud
+lib32-mangohud
+retroarch
+antimicrox
+# --- AUR (binario preferido) ---
+protonup-qt
+itch-bin

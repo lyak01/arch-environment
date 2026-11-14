@@ -1,1 +1,8 @@
-# Paquetes de red (a definir)
+# Prioridad: repos oficiales > AUR binario > AUR fuente > omitir
+# --- Repositorios oficiales ---
+networkmanager
+iwd
+bluez
+bluez-utils
+wireless-regdb
+usb_modeswitch

@@ -1,0 +1,2 @@
+# No modificar entorno gráfico
+# No se instalan paquetes de escritorio.

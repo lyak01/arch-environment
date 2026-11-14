@@ -1,0 +1,14 @@
+# Prioridad: repos oficiales > AUR binario > AUR fuente > omitir
+# --- Repositorios oficiales ---
+kitty
+zellij
+starship
+fzf
+htop
+fastfetch
+nano
+nano-syntax-highlighting
+less
+cmatrix
+# --- AUR ---
+tty-clock

@@ -1,0 +1,10 @@
+# Prioridad: repos oficiales > AUR binario > AUR fuente > omitir
+# --- Repositorios oficiales ---
+hyprland
+waybar
+rofi
+dunst
+kitty
+wlogout
+qt5-wayland
+qt6-wayland

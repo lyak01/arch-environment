@@ -1,0 +1,7 @@
+# Prioridad: repos oficiales > AUR binario > AUR fuente > omitir
+# --- Repositorios oficiales ---
+gimp
+krita
+inkscape
+# --- AUR (binario preferido) ---
+blender-3.6-lts-bin

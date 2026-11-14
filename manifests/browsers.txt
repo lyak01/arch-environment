@@ -1,1 +1,6 @@
-# Paquetes de navegadores (a definir)
+# Prioridad: repos oficiales > AUR binario > AUR fuente > omitir
+# --- AUR (binario preferido) ---
+brave-bin
+# --- Repositorios oficiales (opcionales) ---
+firefox
+chromium

@@ -1,0 +1,31 @@
+# Prioridad: repos oficiales > AUR binario > AUR fuente > omitir
+# --- Repositorios oficiales ---
+xfce4
+xfce4-goodies
+lightdm
+lightdm-gtk-greeter
+lightdm-slick-greeter
+xorg-server
+xorg-xinit
+xorg-xrandr
+thunar
+tumbler
+exo
+garcon
+xfconf
+xfdesktop
+xfwm4
+xfce4-session
+xfce4-settings
+xfce4-panel
+xfce4-terminal
+xfce4-appfinder
+xfce4-notifyd
+xfce4-power-manager
+xfce4-pulseaudio-plugin
+xfce4-screenshooter
+gvfs
+gvfs-gphoto2
+gvfs-mtp
+# --- AUR ---
+lightdm-settings

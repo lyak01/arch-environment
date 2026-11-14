@@ -1,1 +1,15 @@
-# Paquetes de desarrollo (a definir)
+# Prioridad: repos oficiales > AUR binario > AUR fuente > omitir
+# --- Repositorios oficiales ---
+git
+github-cli
+code
+nodejs-lts-krypton
+npm
+rust
+python-pip
+python-pipx
+python-virtualenv
+gradle
+jdk17-openjdk
+jdk21-openjdk
+jdk-openjdk

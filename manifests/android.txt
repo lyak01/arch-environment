@@ -1,0 +1,9 @@
+# Prioridad: repos oficiales > AUR binario > AUR fuente > omitir
+# --- Repositorios oficiales ---
+scrcpy
+android-tools
+android-udev
+# --- AUR ---
+android-sdk-cmdline-tools-latest
+android-platform-34
+android-sdk-build-tools

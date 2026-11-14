@@ -1,0 +1,7 @@
+# Prioridad: repos oficiales > AUR binario > AUR fuente > omitir
+# --- Repositorios oficiales ---
+plasma
+sddm
+xorg-server
+konsole
+dolphin

@@ -1,0 +1,4 @@
+# Prioridad: repos oficiales > AUR binario > AUR fuente > omitir
+# --- Repositorios oficiales ---
+virtualbox
+virtualbox-host-dkms

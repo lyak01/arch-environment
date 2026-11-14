@@ -1,1 +1,1 @@
-# Paquetes XFCE (a definir)
+# Movido a manifests/desktop-xfce.txt

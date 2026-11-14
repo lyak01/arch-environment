@@ -1,1 +1,1 @@
-# Paquetes de audio PulseAudio (a definir)
+# Movido a manifests/audio-production.txt y manifests/music-playback.txt

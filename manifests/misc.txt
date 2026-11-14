@@ -1,1 +1,1 @@
-# Paquetes misceláneos (a definir)
+# Movido a manifests/misc-system.txt

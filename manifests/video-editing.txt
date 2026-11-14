@@ -1,0 +1,9 @@
+# Prioridad: repos oficiales > AUR binario > AUR fuente > omitir
+# --- Repositorios oficiales ---
+kdenlive
+gst-libav
+gst-plugins-bad
+gst-plugins-ugly
+avidemux-qt
+# --- AUR ---
+ffmpeg7.1

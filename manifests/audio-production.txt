@@ -1,0 +1,13 @@
+# Prioridad: repos oficiales > AUR binario > AUR fuente > omitir
+# --- Repositorios oficiales ---
+lmms
+audacity
+hydrogen
+qsynth
+calf
+ardour
+mixxx
+ladspa
+# --- AUR ---
+mididings
+reaper

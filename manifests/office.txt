@@ -1,0 +1,6 @@
+# Prioridad: repos oficiales > AUR binario > AUR fuente > omitir
+# --- Repositorios oficiales ---
+libreoffice-fresh
+gparted
+xarchiver
+galculator

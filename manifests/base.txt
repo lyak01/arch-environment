@@ -1,1 +1,27 @@
-# Paquetes base (a definir)
+# Prioridad: repos oficiales > AUR binario > AUR fuente > omitir
+# --- Repositorios oficiales ---
+base
+base-devel
+linux-lts
+linux-lts-headers
+networkmanager
+iwd
+bluez
+bluez-utils
+git
+zram-generator
+opendoas
+pacman-contrib
+rsync
+zip
+less
+nano
+nano-syntax-highlighting
+fastfetch
+htop
+starship
+fzf
+kitty
+zellij
+# --- AUR (binario preferido) ---
+yay
