@@ -18,7 +18,15 @@ if [[ $EUID -ne 0 ]]; then
   exit 1
 fi
 
+ensure_git() {
+  if ! command -v git &>/dev/null; then
+    log "INFO" "git no está instalado, instalando..."
+    pacman -Sy --noconfirm git
+  fi
+}
+
 log "INFO" "=== ARCH RECONSTRUCTOR ==="
+ensure_git
 log "INFO" "Detectando sistema..."
 detect_system
 log "INFO" "Detectando hardware..."
