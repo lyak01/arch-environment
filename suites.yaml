@@ -1,0 +1,20 @@
+suites:
+  - base
+  - desktop
+  - terminal
+  - network
+  - browsers
+  - audio-production
+  - music-playback
+  - video-editing
+  - design-art
+  - office
+  - development
+  - android
+  - security-networking
+  - virtualization
+  - gaming
+  - misc-system
+
+# Cada suite definirá:
+# core, recommended, optional, depends_on, conflicts_with, description

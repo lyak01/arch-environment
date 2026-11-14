@@ -1,0 +1,1 @@
+# Paquetes de audio PulseAudio (a definir)

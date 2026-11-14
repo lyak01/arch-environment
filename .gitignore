@@ -1,0 +1,23 @@
+# Secretos y credenciales
+.ssh/
+.gnupg/
+.password-store/
+*.env
+*.key
+*.pem
+
+# Cachés y logs
+*.log
+.cache/
+__pycache__/
+
+# Binarios y compilados
+*.o
+*.so
+*.a
+*.exe
+
+# Sistema
+/etc/shadow
+/etc/passwd
+/etc/fstab
