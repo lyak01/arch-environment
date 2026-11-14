@@ -1,20 +1,292 @@
 suites:
-  - base
-  - desktop
-  - terminal
-  - network
-  - browsers
-  - audio-production
-  - music-playback
-  - video-editing
-  - design-art
-  - office
-  - development
-  - android
-  - security-networking
-  - virtualization
-  - gaming
-  - misc-system
+  base:
+    description: "Paquetes esenciales del sistema"
+    core:
+      - base
+      - base-devel
+      - linux-lts
+      - linux-lts-headers
+      - networkmanager
+      - iwd
+      - bluez
+      - bluez-utils
+      - git
+      - yay
+      - brave-bin
+    recommended: []
+    optional: []
 
-# Cada suite definirá:
-# core, recommended, optional, depends_on, conflicts_with, description
+  desktop:
+    description: "Entorno gráfico (selección del usuario)"
+    variants:
+      xfce:
+        description: "Entorno XFCE"
+        core:
+          - xfce4
+          - xfce4-goodies
+          - lightdm
+          - lightdm-gtk-greeter
+          - lightdm-slick-greeter
+          - xorg-server
+          - xorg-xinit
+        recommended:
+          - xfce4-power-manager
+          - xfce4-pulseaudio-plugin
+          - xfce4-screenshooter
+        optional: []
+      kde:
+        description: "Entorno KDE Plasma"
+        core:
+          - plasma
+          - sddm
+          - xorg-server
+        recommended:
+          - konsole
+          - dolphin
+        optional: []
+      gnome:
+        description: "Entorno GNOME"
+        core:
+          - gnome
+          - gdm
+        recommended:
+          - gnome-tweaks
+        optional: []
+      hyprland:
+        description: "Compositor Hyprland"
+        core:
+          - hyprland
+          - waybar
+          - rofi
+          - dunst
+        recommended:
+          - kitty
+          - wlogout
+        optional: []
+      i3:
+        description: "Window manager i3"
+        core:
+          - i3-wm
+          - i3status
+          - rofi
+          - picom
+        recommended:
+          - kitty
+        optional: []
+      none:
+        description: "No modificar entorno gráfico"
+        core: []
+        recommended: []
+        optional: []
+
+  terminal:
+    description: "Terminal y productividad"
+    core:
+      - kitty
+      - zellij
+      - starship
+      - fzf
+      - htop
+      - fastfetch
+      - nano
+    recommended:
+      - nano-syntax-highlighting
+      - less
+    optional:
+      - cmatrix
+      - tty-clock
+
+  network:
+    description: "Red y conectividad"
+    core:
+      - networkmanager
+      - iwd
+      - bluez
+      - bluez-utils
+    recommended:
+      - networkmanager-dispatcher
+    optional: []
+
+  browsers:
+    description: "Navegadores web"
+    core:
+      - brave-bin
+    recommended: []
+    optional:
+      - firefox
+      - chromium
+
+  audio-production:
+    description: "Producción musical y audio"
+    core:
+      - lmms
+      - audacity
+    recommended:
+      - hydrogen
+      - qsynth
+      - calf
+      - mididings
+      - ardour
+    optional:
+      - reaper
+      - mixxx
+
+  music-playback:
+    description: "Reproducción de música"
+    core:
+      - strawberry
+      - mpv
+    recommended:
+      - cava
+      - spotdl
+      - sptlrx-bin
+    optional:
+      - vlc
+
+  video-editing:
+    description: "Edición de video"
+    core:
+      - kdenlive
+      - ffmpeg7.1
+    recommended:
+      - gst-libav
+      - gst-plugins-bad
+      - gst-plugins-ugly
+    optional:
+      - avidemux-qt
+
+  design-art:
+    description: "Diseño y arte digital"
+    core:
+      - gimp
+      - krita
+      - inkscape
+    recommended:
+      - blender-3.6-lts-bin
+    optional: []
+
+  office:
+    description: "Oficina y documentos"
+    core:
+      - libreoffice-fresh
+    recommended:
+      - gparted
+      - xarchiver
+      - galculator
+    optional: []
+
+  development:
+    description: "Desarrollo de software"
+    core:
+      - git
+      - github-cli
+      - code
+      - nodejs-lts-krypton
+      - npm
+      - rust
+    recommended:
+      - gradle
+      - jdk21-openjdk
+      - jdk-openjdk
+      - python-pip
+      - python-pipx
+      - python-virtualenv
+    optional:
+      - jdk17-openjdk
+
+  android:
+    description: "Desarrollo Android"
+    core:
+      - android-sdk-cmdline-tools-latest
+      - scrcpy
+    recommended:
+      - android-platform-34
+      - android-sdk-build-tools
+      - android-tools
+      - android-udev
+    optional: []
+
+  security-networking:
+    description: "Ciberseguridad y redes"
+    core:
+      - wireshark-qt
+      - packettracer
+    recommended:
+      - aircrack-ng
+    optional:
+      - rockyou
+
+  virtualization:
+    description: "Máquinas virtuales"
+    core:
+      - virtualbox
+      - virtualbox-host-dkms
+    recommended: []
+    optional: []
+
+  gaming:
+    description: "Juegos y emulación"
+    core:
+      - steam
+      - lutris
+      - wine
+      - winetricks
+    recommended:
+      - mangohud
+      - lib32-mangohud
+      - protonup-qt
+      - retroarch
+      - itch-bin
+    optional:
+      - antimicrox
+
+  misc-system:
+    description: "Misceláneos y accesorios del sistema"
+    core:
+      - pamac-aur
+      - gparted
+      - tumbler
+      - ffmpegthumbnailer
+      - thunar-archive-plugin
+      - thunar-media-tags-plugin
+      - thunar-volman
+    recommended:
+      - gwe
+      - pulseeffects
+      - pavucontrol
+      - pulseaudio-equalizer-ladspa
+      - mugshot
+      - mission-center
+      - xfce4-docklike-plugin
+      - xfce4-whiskermenu-plugin
+      - xfce4-clipman-plugin
+      - xfce4-cpufreq-plugin
+      - xfce4-cpugraph-plugin
+      - xfce4-netload-plugin
+      - xfce4-systemload-plugin
+      - xfce4-sensors-plugin
+      - xfce4-weather-plugin
+      - xfce4-notes-plugin
+      - xfce4-timer-plugin
+      - xfce4-mpc-plugin
+      - xfce4-mailwatch-plugin
+      - xfce4-fsguard-plugin
+      - xfce4-eyes-plugin
+      - xfce4-verve-plugin
+      - xfce4-xkb-plugin
+      - xfce4-wavelan-plugin
+      - xfce4-mount-plugin
+      - xfce4-places-plugin
+      - xfce4-dict
+      - xfce4-battery-plugin
+      - xfce4-diskperf-plugin
+      - xfce4-time-out-plugin
+    optional: []
+
+# Reglas de dependencia:
+# - Si el usuario elige XFCE, se sugieren plugins de panel XFCE y Thunar.
+# - Si elige KDE, se sugieren widgets de Plasma y Dolphin.
+# - Si elige GNOME, se sugieren extensiones y Nautilus.
+# - Si elige Hyprland o i3, se sugieren compositor, barra, launcher y notificaciones.
+# - Si elige "none", solo se instalan accesorios genéricos.
+# - gwe, pulseeffects y nvidia-580xx-settings son sugerencias condicionales a NVIDIA/PulseAudio.
