@@ -1,72 +1,57 @@
 #!/usr/bin/env bash
-# bootstrap.sh - Asistente CLI para arch-environment
+# =============================================================
+#  Zynith Reconstructor - bootstrap.sh
+#  Punto de entrada principal
+#  v2.3 - Fuerza XFCE + Plymouth + reporte final
+# =============================================================
 
-set -uo pipefail
+set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/lib/log.sh"
-source "$SCRIPT_DIR/lib/detect.sh"
-source "$SCRIPT_DIR/lib/ask.sh"
-source "$SCRIPT_DIR/lib/install.sh"
-source "$SCRIPT_DIR/lib/themes.sh"
-source "$SCRIPT_DIR/lib/dotfiles.sh"
-source "$SCRIPT_DIR/lib/scripts.sh"
+REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$REPO_DIR/lib/log.sh"
+source "$REPO_DIR/lib/detect.sh"
+source "$REPO_DIR/lib/install.sh"
+source "$REPO_DIR/lib/themes.sh"
+source "$REPO_DIR/lib/dotfiles.sh"
+source "$REPO_DIR/lib/report.sh"
 
 DRY_RUN=0
-if [[ "${1:-}" == "--dry-run" ]]; then
-  DRY_RUN=1
-fi
+FORCE_XFCE=0
 
-LOG_DIR="/var/log/arch-reconstructor"
-mkdir -p "$LOG_DIR" 2>/dev/null || true
-LOG_FILE="$LOG_DIR/$(date +%Y-%m-%d-%H%M%S).log"
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --dry-run) DRY_RUN=1; shift ;;
+    *) shift ;;
+  esac
+done
 
-if [[ $EUID -ne 0 ]]; then
-  echo "Este script debe ejecutarse con sudo o como root."
-  exit 1
-fi
+init_log
+log "INFO" "Iniciando Zynith Reconstructor..."
 
-ensure_git() {
-  if ! command -v git &>/dev/null; then
-    log "INFO" "git no está instalado, instalando..."
-    if [[ $DRY_RUN -eq 1 ]]; then
-      log "INFO" "[DRY-RUN] Se instalaría git."
-    else
-      pacman -Sy --noconfirm git
-    fi
-  fi
-}
-
-log "INFO" "=== ARCH RECONSTRUCTOR ==="
-if [[ $DRY_RUN -eq 1 ]]; then
-  log "INFO" "Modo DRY-RUN activado: no se instalará nada."
-fi
-ensure_git
-log "INFO" "Detectando sistema..."
-detect_system
-log "INFO" "Detectando hardware..."
 detect_hardware
+detect_existing_de
+ask_force_xfce
 
-ask_profile
-ask_desktop
-ask_audio
-ask_browser
-ask_suites
-ask_themes
-ask_dotfiles
-ask_scripts
+install_all
+install_flatpaks
+dedup_packages
 
-show_summary
-if confirm "¿Confirmar e iniciar instalación?"; then
-  install_selected
-  if [[ $APPLY_THEMES -eq 1 ]]; then
-    import_themes
-  fi
-  import_dotfiles
-  import_scripts
-else
-  log "INFO" "Instalación cancelada por el usuario."
-  exit 0
+if [[ $DRY_RUN -eq 0 ]]; then
+  force_xfce
 fi
 
-finalize
+sync_themes
+import_themes
+import_xfwm4
+import_plymouth
+
+if ask_yes_no "¿Importar dotfiles personales?"; then
+  import_dotfiles
+fi
+
+if ask_yes_no "¿Importar scripts personales?"; then
+  import_scripts
+fi
+
+generate_report
+log "OK" "Proceso completado."

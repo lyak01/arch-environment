@@ -1,112 +1,105 @@
 #!/usr/bin/env bash
-# install.sh - Instalación con prioridad de fuentes
+# =============================================================
+#  Zynith Reconstructor - lib/install.sh
+#  Instalación de paquetes y suites (Arch Linux)
+#  v2.3 - Fuerza XFCE real + Plymouth + reporte final
+# =============================================================
 
-DRY_RUN="${DRY_RUN:-0}"
+# Detectar entorno de escritorio existente
+detect_existing_de() {
+  if command -v plasmashell &>/dev/null; then EXISTING_DE="plasma"
+  elif command -v gnome-shell &>/dev/null; then EXISTING_DE="gnome"
+  elif command -v Hyprland &>/dev/null; then EXISTING_DE="hyprland"
+  elif command -v i3 &>/dev/null; then EXISTING_DE="i3-wm"
+  elif command -v xfce4-session &>/dev/null; then EXISTING_DE="xfce"
+  else EXISTING_DE="none"
+  fi
+  log "INFO" "Entorno existente detectado: $EXISTING_DE"
+}
 
-install_package() {
-  local pkg="$1"
+# Preguntar si forzar XFCE (doble confirmación)
+ask_force_xfce() {
+  if [[ "$EXISTING_DE" != "none" && "$EXISTING_DE" != "xfce" ]]; then
+    read -rp "Se detectó $EXISTING_DE. ¿Forzar XFCE? (s/N): " r1
+    if [[ "$r1" =~ ^[Ss]$ ]]; then
+      read -rp "Esto DESINSTALARÁ $EXISTING_DE. ¿Confirmar? (escriba 'SI'): " r2
+      if [[ "$r2" == "SI" ]]; then
+        FORCE_XFCE=1
+        log "WARN" "Forzar XFCE activado para $EXISTING_DE."
+      fi
+    fi
+  fi
+}
+
+# Forzar XFCE: desinstalar DE anterior
+force_xfce() {
+  if [[ ${FORCE_XFCE:-0} -eq 1 ]]; then
+    case "$EXISTING_DE" in
+      plasma)
+        log "INFO" "Desinstalando Plasma..."
+        pacman -Rns --noconfirm plasma sddm 2>/dev/null || log "WARN" "Algunos paquetes de Plasma no se pudieron desinstalar."
+        ;;
+      gnome)
+        log "INFO" "Desinstalando GNOME..."
+        pacman -Rns --noconfirm gnome gdm 2>/dev/null || log "WARN" "Algunos paquetes de GNOME no se pudieron desinstalar."
+        ;;
+      hyprland)
+        log "INFO" "Desinstalando Hyprland..."
+        pacman -Rns --noconfirm hyprland waybar rofi dunst 2>/dev/null || log "WARN" "Algunos paquetes de Hyprland no se pudieron desinstalar."
+        ;;
+      i3-wm)
+        log "INFO" "Desinstalando i3..."
+        pacman -Rns --noconfirm i3-wm i3status rofi picom 2>/dev/null || log "WARN" "Algunos paquetes de i3 no se pudieron desinstalar."
+        ;;
+    esac
+    log "OK" "Entorno anterior ($EXISTING_DE) desinstalado."
+  fi
+}
+
+# Instalar paquetes de una suite
+install_suite() {
+  local suite=$1
+  local pkgs="${SUITES[$suite]}"
+  log "INFO" "Instalando suite: $suite"
   if [[ $DRY_RUN -eq 1 ]]; then
-    if pacman -Si "$pkg" &>/dev/null; then
-      log "INFO" "[DRY-RUN] Se instalaría $pkg desde repositorio oficial."
-    elif pacman -Sg "$pkg" &>/dev/null; then
-      log "INFO" "[DRY-RUN] Se instalaría $pkg (grupo) desde repositorio oficial."
-    elif command -v yay &>/dev/null && yay -Si "$pkg" &>/dev/null; then
-      log "INFO" "[DRY-RUN] Se instalaría $pkg desde AUR."
-    else
-      log "WARN" "[DRY-RUN] $pkg paquete no se encuentra disponible en los mirrors oficiales ni en un binario disponible del AUR, se ha omitido por seguridad, lamentamos este inconveniente y se sugiere modificar/montar el paquete manualmente."
-    fi
-    return 0
+    log "DRY-RUN" "Se instalarían: $pkgs"
+  else
+    pacman -S --needed --noconfirm $pkgs
+    log "OK" "Suite $suite instalada."
   fi
-  if pacman -Si "$pkg" &>/dev/null; then
-    if pacman -S --noconfirm "$pkg"; then
-      log "OK" "$pkg instalado desde repositorio oficial"
-      return 0
-    fi
-  fi
-  if pacman -Sg "$pkg" &>/dev/null; then
-    if pacman -S --noconfirm "$pkg"; then
-      log "OK" "$pkg (grupo) instalado desde repositorio oficial"
-      return 0
-    fi
-  fi
-  if command -v yay &>/dev/null && yay -Si "$pkg" &>/dev/null; then
-    if yay -S --noconfirm "$pkg"; then
-      log "OK" "$pkg instalado desde AUR"
-      return 0
-    fi
-  fi
-  log "WARN" "$pkg paquete no se encuentra disponible en los mirrors oficiales ni en un binario disponible del AUR, se ha omitido por seguridad, lamentamos este inconveniente y se sugiere modificar/montar el paquete manualmente."
-  return 1
 }
 
-install_flatpak() {
-  local app="$1"
+# Instalar todos los paquetes del manifiesto
+install_all() {
+  log "INFO" "Instalando todos los paquetes del manifiesto..."
   if [[ $DRY_RUN -eq 1 ]]; then
-    log "INFO" "[DRY-RUN] Se instalaría Flatpak $app."
-    return 0
-  fi
-  if flatpak install -y --noninteractive "$app"; then
-    log "OK" "Flatpak $app instalado"
-    return 0
-  fi
-  log "WARN" "Flatpak $app no se pudo instalar."
-  return 1
-}
-
-install_manifest() {
-  local file="$1"
-  [[ -f "$file" ]] || return 1
-  local pkgs=()
-  local flatpaks=()
-  while IFS= read -r line; do
-    [[ -z "$line" || "$line" =~ ^# ]] && continue
-    if [[ "$line" =~ ^flatpak: ]]; then
-      flatpaks+=("${line#flatpak:}")
-    else
-      pkgs+=("$line")
-    fi
-  done < "$file"
-  # Deduplicar
-  if [[ ${#pkgs[@]} -gt 0 ]]; then
-    mapfile -t pkgs < <(printf '%s\n' "${pkgs[@]}" | sort -u)
-  fi
-  if [[ ${#flatpaks[@]} -gt 0 ]]; then
-    mapfile -t flatpaks < <(printf '%s\n' "${flatpaks[@]}" | sort -u)
-  fi
-  for pkg in "${pkgs[@]}"; do
-    install_package "$pkg" || true
-  done
-  for app in "${flatpaks[@]}"; do
-    install_flatpak "$app" || true
-  done
-}
-
-install_selected() {
-  local manifest_dir="$SCRIPT_DIR/manifests"
-  if [[ $PROFILE_BASE -eq 1 ]]; then
-    install_manifest "$manifest_dir/base.txt"
-  fi
-  case "$DE" in
-    xfce) install_manifest "$manifest_dir/desktop-xfce.txt" ;;
-    kde) install_manifest "$manifest_dir/desktop-kde.txt" ;;
-    gnome) install_manifest "$manifest_dir/desktop-gnome.txt" ;;
-    hyprland) install_manifest "$manifest_dir/desktop-hyprland.txt" ;;
-    i3) install_manifest "$manifest_dir/desktop-i3.txt" ;;
-    none) ;;
-  esac
-  case "$AUDIO_CHOICE" in
-    pulse) install_manifest "$manifest_dir/audio-production.txt" ;;
-  esac
-  case "$BROWSER" in
-    brave) install_manifest "$manifest_dir/browsers.txt" ;;
-  esac
-  if [[ $INSTALL_SUITES -eq 1 ]]; then
-    for f in "$manifest_dir"/terminal.txt "$manifest_dir"/network.txt "$manifest_dir"/music-playback.txt "$manifest_dir"/video-editing.txt "$manifest_dir"/design-art.txt "$manifest_dir"/office.txt "$manifest_dir"/development.txt "$manifest_dir"/android.txt "$manifest_dir"/security-networking.txt "$manifest_dir"/virtualization.txt "$manifest_dir"/gaming-core.txt "$manifest_dir"/misc-system.txt; do
-      install_manifest "$f"
-    done
+    log "DRY-RUN" "Se instalarían todos los paquetes del manifiesto."
+  else
+    xargs -a "$REPO_DIR/manifest/packages.txt" pacman -S --needed --noconfirm
+    log "OK" "Todos los paquetes instalados."
   fi
 }
 
-finalize() {
-  log "INFO" "Instalación finalizada. Revisa el log en $LOG_FILE"
+# Instalar Flatpaks
+install_flatpaks() {
+  log "INFO" "Instalando Flatpaks..."
+  if [[ $DRY_RUN -eq 1 ]]; then
+    log "DRY-RUN" "Se instalarían los Flatpaks del manifiesto."
+  else
+    while read -r app; do
+      flatpak install -y "$app"
+    done < "$REPO_DIR/manifest/flatpaks.txt"
+    log "OK" "Flatpaks instalados."
+  fi
+}
+
+# Deduplicar paquetes (solo si el usuario lo pide)
+dedup_packages() {
+  log "INFO" "Deduplicando paquetes..."
+  if [[ $DRY_RUN -eq 1 ]]; then
+    log "DRY-RUN" "Se deduplicarían paquetes redundantes."
+  else
+    pacman -Qdtq | xargs -r pacman -Rns --noconfirm
+    log "OK" "Paquetes redundantes eliminados."
+  fi
 }
