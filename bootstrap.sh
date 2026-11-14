@@ -1,22 +1,42 @@
 #!/usr/bin/env bash
-# bootstrap.sh - Esqueleto del asistente CLI para arch-environment
+# bootstrap.sh - Asistente CLI para arch-environment
 
-set -euo pipefail
+set -uo pipefail
 
-printf '=== ARCH RECONSTRUCTOR ===\n'
-printf 'Este es un esqueleto inicial. La lógica de instalación aún no está implementada.\n'
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/log.sh"
+source "$SCRIPT_DIR/lib/detect.sh"
+source "$SCRIPT_DIR/lib/ask.sh"
+source "$SCRIPT_DIR/lib/install.sh"
 
-# Detección básica (a completar)
-printf '\n[1/8] Detectando sistema...\n'
-printf 'Distro: %s\n' "$(. /etc/os-release && echo "$PRETTY_NAME")"
-printf 'Kernel: %s\n' "$(uname -r)"
+LOG_DIR="/var/log/arch-reconstructor"
+mkdir -p "$LOG_DIR" 2>/dev/null || true
+LOG_FILE="$LOG_DIR/$(date +%Y-%m-%d-%H%M%S).log"
 
-printf '\n[2/8] Selección de entorno gráfico (pendiente)\n'
-printf '[3/8] Servidor gráfico (pendiente)\n'
-printf '[4/8] Audio (pendiente)\n'
-printf '[5/8] Navegador principal (pendiente)\n'
-printf '[6/8] Gaming (pendiente)\n'
-printf '[7/8] Temas y personalización (pendiente)\n'
-printf '[8/8] Resumen y confirmación final (pendiente)\n'
+if [[ $EUID -ne 0 ]]; then
+  echo "Este script debe ejecutarse con sudo o como root."
+  exit 1
+fi
 
-printf '\nFin del esqueleto.\n'
+log "INFO" "=== ARCH RECONSTRUCTOR ==="
+log "INFO" "Detectando sistema..."
+detect_system
+log "INFO" "Detectando hardware..."
+detect_hardware
+
+ask_profile
+ask_desktop
+ask_audio
+ask_browser
+ask_suites
+ask_themes
+
+show_summary
+if confirm "¿Confirmar e iniciar instalación?"; then
+  install_selected
+else
+  log "INFO" "Instalación cancelada por el usuario."
+  exit 0
+fi
+
+finalize

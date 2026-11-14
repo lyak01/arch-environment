@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+# install.sh - Instalación con prioridad de fuentes
+
+install_package() {
+  local pkg="$1"
+  if pacman -Si "$pkg" &>/dev/null; then
+    if pacman -S --noconfirm "$pkg"; then
+      log "OK" "$pkg instalado desde repositorio oficial"
+      return 0
+    fi
+  fi
+  if command -v yay &>/dev/null && yay -Si "$pkg" &>/dev/null; then
+    if yay -S --noconfirm "$pkg"; then
+      log "OK" "$pkg instalado desde AUR"
+      return 0
+    fi
+  fi
+  log "WARN" "$pkg paquete no se encuentra disponible en los mirrors oficiales ni en un binario disponible del AUR, se ha omitido por seguridad, lamentamos este inconveniente y se sugiere modificar/montar el paquete manualmente."
+  return 1
+}
+
+install_manifest() {
+  local file="$1"
+  [[ -f "$file" ]] || return 1
+  while IFS= read -r pkg; do
+    [[ -z "$pkg" || "$pkg" =~ ^# ]] && continue
+    install_package "$pkg" || true
+  done < "$file"
+}
+
+install_selected() {
+  local manifest_dir="$SCRIPT_DIR/manifests"
+  if [[ $PROFILE_BASE -eq 1 ]]; then
+    install_manifest "$manifest_dir/base.txt"
+  fi
+  case "$DE" in
+    xfce) install_manifest "$manifest_dir/desktop-xfce.txt" ;;
+    kde) install_manifest "$manifest_dir/desktop-kde.txt" ;;
+    gnome) install_manifest "$manifest_dir/desktop-gnome.txt" ;;
+    hyprland) install_manifest "$manifest_dir/desktop-hyprland.txt" ;;
+    i3) install_manifest "$manifest_dir/desktop-i3.txt" ;;
+    none) ;;
+  esac
+  case "$AUDIO_CHOICE" in
+    pulse) install_manifest "$manifest_dir/audio-production.txt" ;;
+  esac
+  case "$BROWSER" in
+    brave) install_manifest "$manifest_dir/browsers.txt" ;;
+  esac
+  if [[ $INSTALL_SUITES -eq 1 ]]; then
+    for f in "$manifest_dir"/terminal.txt "$manifest_dir"/network.txt "$manifest_dir"/music-playback.txt "$manifest_dir"/video-editing.txt "$manifest_dir"/design-art.txt "$manifest_dir"/office.txt "$manifest_dir"/development.txt "$manifest_dir"/android.txt "$manifest_dir"/security-networking.txt "$manifest_dir"/virtualization.txt "$manifest_dir"/gaming-core.txt "$manifest_dir"/misc-system.txt; do
+      install_manifest "$f"
+    done
+  fi
+}
+
+finalize() {
+  log "INFO" "Instalación finalizada. Revisa el log en $LOG_FILE"
+}
