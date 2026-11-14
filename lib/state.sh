@@ -2,9 +2,11 @@
 # =============================================================
 #  Zynith Reconstructor - lib/state.sh
 #  Checkpoint: guardar/leer estado de fases
-#  v2.4 - Reanudación de instalación incompleta
+#  v2.4.1 - Fix: fallback de LOG_DIR
 # =============================================================
 
+# Fallback: si LOG_DIR no está definida, usar ruta por defecto
+LOG_DIR="${LOG_DIR:-/var/log/arch-reconstructor}"
 STATE_FILE="$LOG_DIR/state.json"
 
 # Inicializar estado si no existe
