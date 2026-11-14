@@ -1,8 +1,20 @@
 #!/usr/bin/env bash
 # install.sh - Instalación con prioridad de fuentes
 
+DRY_RUN="${DRY_RUN:-0}"
+
 install_package() {
   local pkg="$1"
+  if [[ $DRY_RUN -eq 1 ]]; then
+    if pacman -Si "$pkg" &>/dev/null; then
+      log "INFO" "[DRY-RUN] Se instalaría $pkg desde repositorio oficial."
+    elif command -v yay &>/dev/null && yay -Si "$pkg" &>/dev/null; then
+      log "INFO" "[DRY-RUN] Se instalaría $pkg desde AUR."
+    else
+      log "WARN" "[DRY-RUN] $pkg paquete no se encuentra disponible en los mirrors oficiales ni en un binario disponible del AUR, se ha omitido por seguridad, lamentamos este inconveniente y se sugiere modificar/montar el paquete manualmente."
+    fi
+    return 0
+  fi
   if pacman -Si "$pkg" &>/dev/null; then
     if pacman -S --noconfirm "$pkg"; then
       log "OK" "$pkg instalado desde repositorio oficial"

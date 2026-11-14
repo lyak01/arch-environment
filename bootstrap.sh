@@ -9,6 +9,11 @@ source "$SCRIPT_DIR/lib/detect.sh"
 source "$SCRIPT_DIR/lib/ask.sh"
 source "$SCRIPT_DIR/lib/install.sh"
 
+DRY_RUN=0
+if [[ "${1:-}" == "--dry-run" ]]; then
+  DRY_RUN=1
+fi
+
 LOG_DIR="/var/log/arch-reconstructor"
 mkdir -p "$LOG_DIR" 2>/dev/null || true
 LOG_FILE="$LOG_DIR/$(date +%Y-%m-%d-%H%M%S).log"
@@ -21,11 +26,18 @@ fi
 ensure_git() {
   if ! command -v git &>/dev/null; then
     log "INFO" "git no está instalado, instalando..."
-    pacman -Sy --noconfirm git
+    if [[ $DRY_RUN -eq 1 ]]; then
+      log "INFO" "[DRY-RUN] Se instalaría git."
+    else
+      pacman -Sy --noconfirm git
+    fi
   fi
 }
 
 log "INFO" "=== ARCH RECONSTRUCTOR ==="
+if [[ $DRY_RUN -eq 1 ]]; then
+  log "INFO" "Modo DRY-RUN activado: no se instalará nada."
+fi
 ensure_git
 log "INFO" "Detectando sistema..."
 detect_system
