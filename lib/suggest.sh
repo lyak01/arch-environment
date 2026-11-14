@@ -9,10 +9,10 @@ build_suggestions() {
   if [[ "$AUDIO" == "PulseAudio" ]]; then
     SUGGESTIONS+=(pulseeffects pulseaudio-equalizer-ladspa)
   fi
-  if [[ "$EXISTING_DE" == "xfce" || "${DESKTOP_VARIANT:-}" == "xfce" ]]; then
+  if [[ "${DESKTOP_VARIANT:-}" == "xfce" ]]; then
     SUGGESTIONS+=(xfce4-docklike-plugin xfce4-whiskermenu-plugin)
   fi
-  if [[ "$EXISTING_DE" == "plasma" || "${DESKTOP_VARIANT:-}" == "kde" ]]; then
+  if [[ "${DESKTOP_VARIANT:-}" == "kde" ]]; then
     SUGGESTIONS+=(konsole dolphin)
   fi
   local -A seen=()

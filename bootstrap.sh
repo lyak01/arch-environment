@@ -2,9 +2,7 @@
 # =============================================================
 #  Zynith Reconstructor - bootstrap.sh
 #  Punto de entrada principal
-#  v3.0 - Asistente interactivo: suites omitibles, selección
-#  múltiple desde sugerencias, confirmación explícita, dry-run,
-#  tolerancia a fallos, checkpoint y reporte final.
+#  v3.0.1 - Fix: quitar local fuera de funciones
 # =============================================================
 
 set -euo pipefail
@@ -66,12 +64,10 @@ ask_suggestions
 
 if [[ ${#SELECTED_PACKAGES[@]} -gt 0 ]]; then
   echo "=== PAQUETES SELECCIONADOS ==="
-  local p
   for p in "${SELECTED_PACKAGES[@]}"; do
     echo " - $p"
   done
   if [[ $DRY_RUN -eq 0 ]]; then
-    local c
     read -rp "¿Confirmar instalación? (escribe SI): " c
     if [[ "$c" != "SI" ]]; then
       log "INFO" "Instalación cancelada por el usuario."
