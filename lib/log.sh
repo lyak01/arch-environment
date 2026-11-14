@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# log.sh - Registro de eventos
-# v2.4.1 - Añade init_log y LOG_DIR global
+# log.sh - Registro de eventos y utilidades de interacción
 
 LOG_DIR="${LOG_DIR:-/var/log/arch-reconstructor}"
 LOG_FILE="${LOG_FILE:-$LOG_DIR/install-$(date +%Y%m%d-%H%M%S).log}"
@@ -12,7 +11,15 @@ init_log() {
 }
 
 log() {
-  local level="$1"; shift
+  local level="$1"
+  shift
   local msg="$*"
   printf '[%s] %s\n' "$level" "$msg" | tee -a "$LOG_FILE"
+}
+
+ask_yes_no() {
+  local prompt="$1"
+  local r
+  read -rp "$prompt (s/N): " r
+  [[ "$r" =~ ^[Ss]$ ]]
 }

@@ -1,46 +1,68 @@
 #!/usr/bin/env bash
-# dotfiles.sh - Importación de dotfiles bajo demanda
+# dotfiles.sh - Importación de dotfiles y scripts personales (solo si el usuario aprueba)
 
 import_dotfiles() {
-  if [[ $IMPORT_DOTFILES -ne 1 || -z "$DOTFILES_URL" ]]; then
-    return 0
-  fi
-  local tmp="$(mktemp -d)"
-  trap 'rm -rf "$tmp"' RETURN
-
-  if [[ $DRY_RUN -eq 1 ]]; then
-    log "INFO" "[DRY-RUN] Se clonaría $DOTFILES_URL e importarían dotfiles."
-    return 0
-  fi
-
-  if ! git clone --depth 1 "$DOTFILES_URL" "$tmp/dotfiles"; then
-    log "ERROR" "No se pudo clonar $DOTFILES_URL"
-    return 1
-  fi
-
-  local src="$tmp/dotfiles"
-
-  # Rutas seguras
-  for d in xfce4 Thunar kitty fastfetch htop mpv gtk-3.0 gtk-2.0; do
-    if [ -d "$src/.config/$d" ]; then
-      mkdir -p ~/.config
-      cp -r "$src/.config/$d" ~/.config/
-      log "OK" "Dotfile $d importado"
+  local dir="$HOME/.local/share/arch-dotfiles"
+  if [[ -d "$dir/.git" ]]; then
+    if ! git -C "$dir" pull --ff-only; then
+      if [[ $TOLERANT -eq 1 ]]; then
+        log "WARN" "No se pudo actualizar arch-dotfiles. Continuando..."
+      else
+        log "ERROR" "No se pudo actualizar arch-dotfiles. Abortando."
+        return 1
+      fi
     fi
-  done
-  for f in starship.toml mimeapps.list user-dirs.dirs; do
-    if [ -f "$src/.config/$f" ]; then
-      mkdir -p ~/.config
-      cp "$src/.config/$f" ~/.config/
-      log "OK" "Dotfile $f importado"
+  else
+    if ! git clone https://github.com/lyak01/arch-dotfiles.git "$dir"; then
+      if [[ $TOLERANT -eq 1 ]]; then
+        log "WARN" "No se pudo clonar arch-dotfiles. Continuando..."
+      else
+        log "ERROR" "No se pudo clonar arch-dotfiles. Abortando."
+        return 1
+      fi
     fi
-  done
+  fi
+  if [[ -d "$dir/.config" ]]; then
+    mkdir -p "$HOME/.config"
+    cp -r "$dir/.config/"* "$HOME/.config/" 2>/dev/null || true
+  fi
+  local f
   for f in .bashrc .bash_profile .gitconfig; do
-    if [ -f "$src/$f" ]; then
-      cp "$src/$f" ~/"$f"
-      log "OK" "Dotfile $f importado"
+    if [[ -f "$dir/$f" ]]; then
+      cp "$dir/$f" "$HOME/$f"
     fi
   done
+  echo "dotfiles importados" >> "$LOG_DIR/dotfiles-imported.log"
+  mark_phase_done "dotfiles"
+  log "OK" "Dotfiles importados."
+}
 
-  log "INFO" "Importación de dotfiles finalizada."
+import_scripts() {
+  local dir="$HOME/.local/share/personal-scripts"
+  if [[ -d "$dir/.git" ]]; then
+    if ! git -C "$dir" pull --ff-only; then
+      if [[ $TOLERANT -eq 1 ]]; then
+        log "WARN" "No se pudo actualizar personal-scripts. Continuando..."
+      else
+        log "ERROR" "No se pudo actualizar personal-scripts. Abortando."
+        return 1
+      fi
+    fi
+  else
+    if ! git clone https://github.com/lyak01/personal-scripts.git "$dir"; then
+      if [[ $TOLERANT -eq 1 ]]; then
+        log "WARN" "No se pudo clonar personal-scripts. Continuando..."
+      else
+        log "ERROR" "No se pudo clonar personal-scripts. Abortando."
+        return 1
+      fi
+    fi
+  fi
+  mkdir -p "$HOME/.local/bin"
+  if command -v find &>/dev/null; then
+    find "$dir" -maxdepth 1 -type f -executable -exec cp {} "$HOME/.local/bin/" \; 2>/dev/null || true
+  fi
+  echo "scripts importados" >> "$LOG_DIR/scripts-imported.log"
+  mark_phase_done "scripts"
+  log "OK" "Scripts importados."
 }
