@@ -58,20 +58,41 @@ arch-environment/
 
 ## Ejecutar
 
-### Línea principal (recomendada para primera prueba)
+### Paso 1: Clonar el repositorio
 
 ```bash
-./bootstrap.sh --dry-run --tolerant
+git clone https://github.com/lyak01/arch-environment.git
+cd arch-environment
+```
+
+### Paso 2: Ejecutar (dry-run, recomendado para primera prueba)
+
+```bash
+sudo bash bootstrap.sh --dry-run --tolerant
 ```
 
 Esta línea hace:
 - `--dry-run`: no instala nada, solo simula.
 - `--tolerant`: si algo falla, lo registra y continúa.
 
-### Ejecución real (instala de verdad)
+### Paso 3: Ejecución real (instala de verdad)
 
 ```bash
-./bootstrap.sh --tolerant
+sudo bash bootstrap.sh --tolerant
+```
+
+### Resumen de comandos (copiar y pegar)
+
+**Para dry-run (primera prueba):**
+
+```bash
+git clone https://github.com/lyak01/arch-environment.git && cd arch-environment && sudo bash bootstrap.sh --dry-run --tolerant
+```
+
+**Para ejecución real:**
+
+```bash
+git clone https://github.com/lyak01/arch-environment.git && cd arch-environment && sudo bash bootstrap.sh --tolerant
 ```
 
 ### Flags disponibles
