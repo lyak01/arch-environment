@@ -2,16 +2,30 @@
 # =============================================================
 #  Zynith Reconstructor - lib/themes.sh
 #  Importación de temas desde zynith-themes
-#  v2.3 - Plymouth por defecto
+#  v2.4 - Tolerancia a fallos en git
 # =============================================================
 
-# Clonar/actualizar zynith-themes
+# Clonar/actualizar zynith-themes (tolerante)
 sync_themes() {
   local dir="$HOME/.local/share/zynith-themes"
   if [[ -d "$dir/.git" ]]; then
-    git -C "$dir" pull --ff-only || log "WARN" "No se pudo actualizar zynith-themes."
+    if ! git -C "$dir" pull --ff-only; then
+      if [[ $TOLERANT -eq 1 ]]; then
+        log "WARN" "No se pudo actualizar zynith-themes. Continuando..."
+      else
+        log "ERROR" "No se pudo actualizar zynith-themes. Abortando."
+        exit 1
+      fi
+    fi
   else
-    git clone https://github.com/lyak01/zynith-themes.git "$dir"
+    if ! git clone https://github.com/lyak01/zynith-themes.git "$dir"; then
+      if [[ $TOLERANT -eq 1 ]]; then
+        log "WARN" "No se pudo clonar zynith-themes. Continuando..."
+      else
+        log "ERROR" "No se pudo clonar zynith-themes. Abortando."
+        exit 1
+      fi
+    fi
   fi
   log "OK" "zynith-themes sincronizado."
 }
