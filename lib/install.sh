@@ -2,7 +2,7 @@
 # =============================================================
 #  Zynith Reconstructor - lib/install.sh
 #  Instalación de paquetes y suites (Arch Linux)
-#  v2.4.2 - Tolerancia a fallos + detección/fuerza XFCE restauradas
+#  v2.4.3 - Lee manifests/*.txt (estructura real del repo)
 # =============================================================
 
 # Detectar entorno de escritorio existente
@@ -56,58 +56,46 @@ force_xfce() {
   fi
 }
 
-# Instalar paquetes de una suite (tolerante si --tolerant)
-install_suite() {
-  local suite=$1
-  local pkgs="${SUITES[$suite]}"
-  log "INFO" "Instalando suite: $suite"
-  if [[ $DRY_RUN -eq 1 ]]; then
-    log "DRY-RUN" "Se instalarían: $pkgs"
-  else
-    if ! pacman -S --needed --noconfirm $pkgs; then
-      if [[ $TOLERANT -eq 1 ]]; then
-        log "WARN" "Fallo instalando suite $suite. Continuando..."
-        echo "$suite" >> "$LOG_DIR/failed-suites.log"
-      else
-        log "ERROR" "Fallo instalando suite $suite. Abortando."
-        exit 1
-      fi
-    else
-      log "OK" "Suite $suite instalada."
-    fi
-  fi
-}
-
-# Instalar todos los paquetes del manifiesto (tolerante)
+# Instalar todos los paquetes de manifests/*.txt (tolerante)
 install_all() {
-  log "INFO" "Instalando todos los paquetes del manifiesto..."
+  log "INFO" "Instalando todos los paquetes de manifests/*.txt..."
   if [[ $DRY_RUN -eq 1 ]]; then
-    log "DRY-RUN" "Se instalarían todos los paquetes del manifiesto."
+    log "DRY-RUN" "Se instalarían todos los paquetes de manifests/*.txt."
   else
-    while read -r pkg; do
-      if ! pacman -S --needed --noconfirm "$pkg"; then
-        if [[ $TOLERANT -eq 1 ]]; then
-          log "WARN" "Fallo instalando $pkg. Continuando..."
-          echo "$pkg" >> "$LOG_DIR/failed-packages.log"
+    for f in "$REPO_DIR"/manifests/*.txt; do
+      [[ -f "$f" ]] || continue
+      while read -r pkg; do
+        [[ -z "$pkg" || "$pkg" == \#* ]] && continue
+        if ! pacman -S --needed --noconfirm "$pkg"; then
+          if [[ $TOLERANT -eq 1 ]]; then
+            log "WARN" "Fallo instalando $pkg (desde $f). Continuando..."
+            echo "$pkg" >> "$LOG_DIR/failed-packages.log"
+          else
+            log "ERROR" "Fallo instalando $pkg (desde $f). Abortando."
+            exit 1
+          fi
         else
-          log "ERROR" "Fallo instalando $pkg. Abortando."
-          exit 1
+          echo "$pkg" >> "$LOG_DIR/installed-packages.log"
         fi
-      else
-        echo "$pkg" >> "$LOG_DIR/installed-packages.log"
-      fi
-    done < "$REPO_DIR/manifest/packages.txt"
-    log "OK" "Paquetes del manifiesto procesados."
+      done < "$f"
+    done
+    log "OK" "Paquetes de manifests/*.txt procesados."
   fi
 }
 
-# Instalar Flatpaks (tolerante)
+# Instalar Flatpaks (tolerante) - usa manifests/flatpaks.txt si existe, si no, nada
 install_flatpaks() {
+  local flatpak_file="$REPO_DIR/manifests/flatpaks.txt"
+  if [[ ! -f "$flatpak_file" ]]; then
+    log "INFO" "No se encontró manifests/flatpaks.txt. Saltando Flatpaks."
+    return 0
+  fi
   log "INFO" "Instalando Flatpaks..."
   if [[ $DRY_RUN -eq 1 ]]; then
-    log "DRY-RUN" "Se instalarían los Flatpaks del manifiesto."
+    log "DRY-RUN" "Se instalarían los Flatpaks de manifests/flatpaks.txt."
   else
     while read -r app; do
+      [[ -z "$app" || "$app" == \#* ]] && continue
       if ! flatpak install -y "$app"; then
         if [[ $TOLERANT -eq 1 ]]; then
           log "WARN" "Fallo instalando Flatpak $app. Continuando..."
@@ -117,7 +105,7 @@ install_flatpaks() {
           exit 1
         fi
       fi
-    done < "$REPO_DIR/manifest/flatpaks.txt"
+    done < "$flatpak_file"
     log "OK" "Flatpaks procesados."
   fi
 }
