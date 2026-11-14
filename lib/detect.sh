@@ -12,7 +12,13 @@ detect_system() {
 
 detect_hardware() {
   GPU="$(lspci -k | grep -i -A3 vga | grep -i -E 'nvidia|amd|intel' | head -1 || echo 'desconocida')"
-  AUDIO="$(pactl info 2>/dev/null | grep -i 'server name' | head -1 || echo 'desconocido')"
+  if pactl info &>/dev/null; then
+    AUDIO="PulseAudio"
+  elif systemctl --user is-active pipewire &>/dev/null; then
+    AUDIO="PipeWire"
+  else
+    AUDIO="desconocido"
+  fi
   log "INFO" "GPU: $GPU"
   log "INFO" "Audio: $AUDIO"
 }

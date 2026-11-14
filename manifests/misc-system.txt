@@ -56,4 +56,4 @@ tlauncher-installer
 tls-client-git
 debtap
 # --- Flatpak ---
-com.github.wwmm.pulseeffects
+flatpak:com.github.wwmm.pulseeffects

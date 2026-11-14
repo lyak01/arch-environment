@@ -27,20 +27,19 @@ En modo dry-run:
 - Genera el log normalmente.
 - No toca nada del sistema.
 
-## Ejecución sin permiso de ejecución
+## Manejo de grupos y Flatpaks
 
-Si `./bootstrap.sh` da "command not found", ejecuta:
-
-```bash
-bash ./bootstrap.sh --dry-run
-```
+- Los grupos de pacman (como `xfce4`) se detectan con `pacman -Sg`.
+- Los Flatpaks se marcan con prefijo `flatpak:` en los manifiestos.
+- Los paquetes se deduplican antes de instalar.
 
 ## Prioridad de fuentes
 
 1. Repos oficiales (pacman)
-2. AUR binario preferido
-3. AUR fuente
-4. Omitir con mensaje de seguridad
+2. Grupos de pacman
+3. AUR binario preferido
+4. AUR fuente
+5. Omitir con mensaje de seguridad
 
 ## Logs
 
