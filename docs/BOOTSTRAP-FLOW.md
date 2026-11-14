@@ -27,6 +27,14 @@ En modo dry-run:
 - Genera el log normalmente.
 - No toca nada del sistema.
 
+## Ejecución sin permiso de ejecución
+
+Si `./bootstrap.sh` da "command not found", ejecuta:
+
+```bash
+bash ./bootstrap.sh --dry-run
+```
+
 ## Prioridad de fuentes
 
 1. Repos oficiales (pacman)

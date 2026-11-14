@@ -14,4 +14,5 @@ fi
 
 git clone --depth 1 https://github.com/lyak01/arch-environment.git "$TMP/arch-environment"
 cd "$TMP/arch-environment"
-sudo ./bootstrap.sh
+chmod +x bootstrap.sh
+sudo ./bootstrap.sh "$@"
