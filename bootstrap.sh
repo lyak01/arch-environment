@@ -2,7 +2,7 @@
 # =============================================================
 #  Zynith Reconstructor - bootstrap.sh
 #  Punto de entrada principal
-#  v2.4 - Tolerancia a fallos + checkpoint
+#  v2.4.3 - Dry-run no marca fases ni clona temas
 # =============================================================
 
 set -euo pipefail
@@ -38,17 +38,17 @@ ask_force_xfce
 
 if ! resume_if_done "packages"; then
   install_all
-  mark_phase_done "packages"
+  [[ $DRY_RUN -eq 0 ]] && mark_phase_done "packages"
 fi
 
 if ! resume_if_done "flatpaks"; then
   install_flatpaks
-  mark_phase_done "flatpaks"
+  [[ $DRY_RUN -eq 0 ]] && mark_phase_done "flatpaks"
 fi
 
 if ! resume_if_done "dedup"; then
   dedup_packages
-  mark_phase_done "dedup"
+  [[ $DRY_RUN -eq 0 ]] && mark_phase_done "dedup"
 fi
 
 if [[ $DRY_RUN -eq 0 ]]; then
@@ -56,24 +56,36 @@ if [[ $DRY_RUN -eq 0 ]]; then
 fi
 
 if ! resume_if_done "themes"; then
-  sync_themes
-  import_themes
-  import_xfwm4
-  import_plymouth
-  mark_phase_done "themes"
+  if [[ $DRY_RUN -eq 1 ]]; then
+    log "DRY-RUN" "Se sincronizarían e importarían temas desde zynith-themes."
+  else
+    sync_themes
+    import_themes
+    import_xfwm4
+    import_plymouth
+    mark_phase_done "themes"
+  fi
 fi
 
 if ! resume_if_done "dotfiles"; then
-  if ask_yes_no "¿Importar dotfiles personales?"; then
-    import_dotfiles
-    mark_phase_done "dotfiles"
+  if [[ $DRY_RUN -eq 1 ]]; then
+    log "DRY-RUN" "Se preguntaría si importar dotfiles personales."
+  else
+    if ask_yes_no "¿Importar dotfiles personales?"; then
+      import_dotfiles
+      mark_phase_done "dotfiles"
+    fi
   fi
 fi
 
 if ! resume_if_done "scripts"; then
-  if ask_yes_no "¿Importar scripts personales?"; then
-    import_scripts
-    mark_phase_done "scripts"
+  if [[ $DRY_RUN -eq 1 ]]; then
+    log "DRY-RUN" "Se preguntaría si importar scripts personales."
+  else
+    if ask_yes_no "¿Importar scripts personales?"; then
+      import_scripts
+      mark_phase_done "scripts"
+    fi
   fi
 fi
 
