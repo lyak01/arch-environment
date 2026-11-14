@@ -9,6 +9,8 @@ source "$SCRIPT_DIR/lib/detect.sh"
 source "$SCRIPT_DIR/lib/ask.sh"
 source "$SCRIPT_DIR/lib/install.sh"
 source "$SCRIPT_DIR/lib/themes.sh"
+source "$SCRIPT_DIR/lib/dotfiles.sh"
+source "$SCRIPT_DIR/lib/scripts.sh"
 
 DRY_RUN=0
 if [[ "${1:-}" == "--dry-run" ]]; then
@@ -51,6 +53,8 @@ ask_audio
 ask_browser
 ask_suites
 ask_themes
+ask_dotfiles
+ask_scripts
 
 show_summary
 if confirm "¿Confirmar e iniciar instalación?"; then
@@ -58,6 +62,8 @@ if confirm "¿Confirmar e iniciar instalación?"; then
   if [[ $APPLY_THEMES -eq 1 ]]; then
     import_themes
   fi
+  import_dotfiles
+  import_scripts
 else
   log "INFO" "Instalación cancelada por el usuario."
   exit 0

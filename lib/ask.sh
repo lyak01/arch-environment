@@ -15,10 +15,41 @@ ask_profile() {
   fi
 }
 
+detect_existing_de() {
+  for de in plasma gnome hyprland i3-wm; do
+    if pacman -Q "$de" &>/dev/null; then
+      echo "$de"
+      return 0
+    fi
+  done
+  echo "none"
+}
+
 ask_desktop() {
   read -rp "¿Qué entorno gráfico deseas? (xfce/kde/gnome/hyprland/i3/none): " DE
   DE="${DE:-none}"
   log "INFO" "Entorno seleccionado: $DE"
+  if [[ "$DE" == "xfce" ]]; then
+    EXISTING=$(detect_existing_de)
+    if [[ "$EXISTING" != "none" && "$EXISTING" != "xfce" ]]; then
+      log "INFO" "Detectado: $EXISTING"
+      if confirm "¿Deseas forzar XFCE y retirar $EXISTING?"; then
+        if confirm "Esta acción desinstalará paquetes de $EXISTING. ¿Confirmas?"; then
+          FORCE_XFCE=1
+          log "INFO" "Forzar XFCE activado."
+        else
+          FORCE_XFCE=0
+          log "INFO" "Forzar XFCE cancelado."
+        fi
+      else
+        FORCE_XFCE=0
+      fi
+    else
+      FORCE_XFCE=0
+    fi
+  else
+    FORCE_XFCE=0
+  fi
 }
 
 ask_audio() {
@@ -49,12 +80,35 @@ ask_themes() {
   fi
 }
 
+ask_dotfiles() {
+  if confirm "¿Deseas importar dotfiles desde un repositorio?"; then
+    read -rp "URL del repositorio de dotfiles: " DOTFILES_URL
+    IMPORT_DOTFILES=1
+  else
+    IMPORT_DOTFILES=0
+    DOTFILES_URL=""
+  fi
+}
+
+ask_scripts() {
+  if confirm "¿Deseas importar scripts y programas personalizados?"; then
+    read -rp "URL del repositorio de scripts: " SCRIPTS_URL
+    IMPORT_SCRIPTS=1
+  else
+    IMPORT_SCRIPTS=0
+    SCRIPTS_URL=""
+  fi
+}
+
 show_summary() {
   log "INFO" "Resumen:"
   log "INFO" "Perfil base: $PROFILE_BASE"
   log "INFO" "Entorno: $DE"
+  log "INFO" "Forzar XFCE: $FORCE_XFCE"
   log "INFO" "Audio: $AUDIO_CHOICE"
   log "INFO" "Navegador: $BROWSER"
   log "INFO" "Suites: $INSTALL_SUITES"
   log "INFO" "Temas: $APPLY_THEMES"
+  log "INFO" "Dotfiles: $IMPORT_DOTFILES"
+  log "INFO" "Scripts: $IMPORT_SCRIPTS"
 }
