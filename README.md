@@ -1,96 +1,148 @@
-# arch-environment
+# Zynith Reconstructor
 
-Reconstructor modular de entorno Arch Linux con suites, perfiles y asistente CLI.
+> **Reconstruye un entorno Arch Linux completo con mínima intervención.**
 
-## Qué hace
+Zynith Reconstructor es un script Bash modular que instala paquetes, importa temas, dotfiles y scripts personales, y genera un reporte de diagnóstico final. Está diseñado para Arch Linux (y derivados que usen `pacman`).
 
-Permite reconstruir un entorno Arch Linux completo desde una instalación base, mediante:
+---
 
-- Detección de hardware, escritorio, audio y gestor de paquetes.
-- Asistente CLI con preguntas y confirmaciones.
-- Suites modulares por categoría (base, escritorio, navegadores, gaming, desarrollo, etc.).
-- Perfiles adaptables por máquina.
-- Exclusión de sistema base crítico y secretos.
-- Respaldo de paquetes huérfanos mediante repositorios personales.
-- Logs detallados y tolerancia a fallos.
+## Características
 
-## Requisitos mínimos
+- Instalación de paquetes desde manifiesto (`manifest/packages.txt`).
+- Instalación de Flatpaks desde manifiesto (`manifest/flatpaks.txt`).
+- Importación de temas desde `zynith-themes` (GTK, iconos, cursores, xfwm4, Plymouth).
+- Importación de dotfiles personales desde `arch-dotfiles` (opcional).
+- Importación de scripts personales desde `personal-scripts` (opcional).
+- Detección de hardware y entorno de escritorio existente.
+- Forzar XFCE (desinstala Plasma/GNOME/Hyprland/i3 con doble confirmación).
+- Plymouth por defecto tras importarlo.
+- Tolerancia a fallos (`--tolerant`): errores se registran y continúa.
+- Checkpoint (reanudación): guarda fases completadas y las salta al reejecutar.
+- Reporte de diagnóstico final con cambios y sugerencias.
+- Logs detallados en `/var/log/arch-reconstructor/`.
 
-- Arch Linux (o derivado compatible).
-- Conexión a internet.
-- Privilegios de sudo o root.
-- `git` (el script lo instala si falta).
+---
 
-## Uso rápido
+## Requisitos
 
-### Opción 1: una sola línea (recomendada)
+- Arch Linux (o derivado con `pacman`).
+- `git`, `curl`, `flatpak` instalados.
+- Acceso a internet.
+- Permisos de `sudo` para instalar paquetes y escribir en `/usr/share/plymouth`.
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/lyak01/arch-environment/main/install.sh | sudo bash
+---
+
+## Estructura del proyecto
+
+```text
+arch-environment/
+├── bootstrap.sh          # Punto de entrada principal
+├── lib/
+│   ├── log.sh            # Logging
+│   ├── detect.sh         # Detección de hardware/DE
+│   ├── install.sh        # Instalación de paquetes/Flatpaks
+│   ├── themes.sh         # Importación de temas
+│   ├── dotfiles.sh       # Importación de dotfiles/scripts
+│   ├── state.sh          # Checkpoint (reanudación)
+│   └── report.sh         # Reporte de diagnóstico final
+├── manifest/
+│   ├── packages.txt      # Paquetes a instalar
+│   └── flatpaks.txt      # Flatpaks a instalar
+├── docs/
+│   ├── REPORT.md         # Explicación del reporte final
+│   └── RESUME.md         # Explicación de checkpoint/tolerancia
+└── README.md             # Este archivo
 ```
 
-Esto clona el repo en un directorio temporal, ejecuta el asistente y limpia el temporal al salir.
+---
 
-### Opción 2: clonar y revisar antes
+## Ejecutar
+
+### Línea principal (recomendada para primera prueba)
 
 ```bash
-git clone https://github.com/lyak01/arch-environment.git
-cd arch-environment
-sudo ./bootstrap.sh
+./bootstrap.sh --dry-run --tolerant
 ```
 
-En ambos casos, el temporal se limpia automáticamente al terminar.
+Esta línea hace:
+- `--dry-run`: no instala nada, solo simula.
+- `--tolerant`: si algo falla, lo registra y continúa.
 
-## Cómo funciona
+### Ejecución real (instala de verdad)
 
-1. Verifica privilegios (sudo/root).
-2. Verifica e instala `git` si falta.
-3. Detecta sistema (distro, kernel, gestor de paquetes).
-4. Detecta hardware (GPU, audio).
-5. Pregunta perfil base, entorno gráfico, audio, navegador.
-6. Recorre suites opcionales una por una.
-7. Muestra resumen y pide confirmación final.
-8. Instala con logs y tolerancia a fallos.
-9. Muestra resumen final.
+```bash
+./bootstrap.sh --tolerant
+```
 
-## Suites disponibles
+### Flags disponibles
 
-- base
-- desktop (xfce | kde | gnome | hyprland | i3 | none)
-- terminal
-- network
-- browsers
-- audio-production
-- music-playback
-- video-editing
-- design-art
-- office
-- development
-- android
-- security-networking
-- virtualization
-- gaming
-- misc-system
+| Flag | Descripción |
+|---|---|
+| `--dry-run` | Simula la instalación sin hacer cambios reales. |
+| `--tolerant` | Errores se registran como `WARN` y el script continúa. |
+| (sin flags) | Comportamiento estricto: cualquier error aborta. |
 
-## Reglas de seguridad
+---
 
-- Nunca se copian ni restauran secretos (`.ssh`, `.gnupg`, tokens, contraseñas).
-- Nunca se copia el kernel, initramfs, GRUB, usuarios o configuración de red.
-- Los drivers propietarios (NVIDIA, CUDA, Oxyglow) quedan fuera de los manifiestos comunes y se instalan solo con confirmación explícita.
-- Los respaldos personales (OBS, CUDA, Oxyglow) permanecen en repositorios privados separados.
-- Si un paquete no está en repos oficiales ni en AUR binario, se omite con un mensaje claro.
+## Flujo de ejecución
 
-## Prioridad de fuentes
+1. Detecta hardware y entorno de escritorio existente.
+2. Pregunta si forzar XFCE (si hay otro DE).
+3. Instala paquetes del manifiesto.
+4. Instala Flatpaks del manifiesto.
+5. Deduplica paquetes redundantes.
+6. (Solo si no es dry-run) Fuerza XFCE si se confirmó.
+7. Sincroniza e importa temas desde `zynith-themes`.
+8. Configura Plymouth como predeterminado.
+9. Pregunta si importar dotfiles personales.
+10. Pregunta si importar scripts personales.
+11. Genera reporte de diagnóstico final.
 
-1. Repos oficiales (pacman).
-2. AUR binario preferido (`*-bin`).
-3. AUR fuente.
-4. Omitir con mensaje de seguridad.
+---
 
-## Logs
+## Logs y reportes
 
-Cada ejecución crea un log en `/var/log/arch-reconstructor/` con niveles OK, WARN y ERROR.
+Todo se registra en `/var/log/arch-reconstructor/`:
 
-## Licencia
+- `install-<fecha>.log` — log general.
+- `installed-packages.log` — paquetes instalados.
+- `failed-packages.log` — paquetes que fallaron (solo con `--tolerant`).
+- `failed-flatpaks.log` — Flatpaks que fallaron (solo con `--tolerant`).
+- `themes-imported.log` — temas importados.
+- `dotfiles-imported.log` — dotfiles importados.
+- `scripts-imported.log` — scripts importados.
+- `state.json` — checkpoint (fases completadas).
+- `report-<fecha>.txt` — reporte de diagnóstico final.
 
-MIT. Ver `LICENSE`.
+---
+
+## Seguridad
+
+- El programa **no modifica `systemctl` ni init systems** por seguridad.
+- Las sugerencias del reporte son solo informativas; el usuario decide si actúa.
+- Forzar XFCE requiere doble confirmación explícita.
+
+---
+
+## FAQ
+
+**¿Puedo usarlo en Debian/Ubuntu/Fedora?**
+No por ahora. El soporte multi-distro está descartado para el plazo inmediato/mediano.
+
+**¿Qué pasa si un paquete no existe?**
+Con `--tolerant`, se registra como `WARN` y continúa. Sin `--tolerant`, aborta.
+
+**¿Puedo reanudar una instalación interrumpida?**
+Sí. El checkpoint guarda fases completadas y las salta al reejecutar.
+
+**¿Dónde veo qué falló?**
+En el reporte final (`report-<fecha>.txt`) y en los logs `failed-*.log`.
+
+---
+
+## Créditos
+
+- Zynith Reconstructor: diseño e implementación (Lyak).
+- zynith-themes: temas GTK, iconos, cursores, xfwm4, Plymouth (Lyak).
+- arch-dotfiles: dotfiles personales (Lyak).
+- personal-scripts: scripts personales (Lyak).

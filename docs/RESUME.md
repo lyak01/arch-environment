@@ -10,7 +10,8 @@ Sin `--tolerant`, cualquier error aborta el proceso (comportamiento estricto, ú
 
 El script guarda el estado de fases completadas en `/var/log/arch-reconstructor/state.json`. Si vuelves a ejecutar, salta las fases ya completadas.
 
-Fases trackeadas:
+### Fases trackeadas
+
 - packages
 - flatpaks
 - dedup
@@ -18,4 +19,28 @@ Fases trackeadas:
 - dotfiles
 - scripts
 
-**Nota:** el checkpoint es por fase, no por paquete individual. Si una fase falla a medias, se reintentará completa al reanudar. [file:53]
+### Ejemplo de `state.json`
+
+```json
+{
+  "fases_completadas": ["packages", "flatpaks", "themes"]
+}
+```
+
+## Nota importante
+
+El checkpoint es **por fase**, no por paquete individual. Si una fase falla a medias, se reintentará completa al reanudar.
+
+## Combinación recomendada
+
+Para la primera prueba, usa:
+
+```bash
+./bootstrap.sh --dry-run --tolerant
+```
+
+Para ejecución real:
+
+```bash
+./bootstrap.sh --tolerant
+```
