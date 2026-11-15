@@ -2,13 +2,14 @@
 # =============================================================
 #  Zynith Reconstructor - bootstrap.sh
 #  Punto de entrada principal
-#  v3.0.1 - Fix: quitar local fuera de funciones
+#  v3.0.3 - Fix: source ask.sh, colores, comillas
 # =============================================================
 
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$REPO_DIR/lib/log.sh"
+source "$REPO_DIR/lib/ask.sh"
 source "$REPO_DIR/lib/detect.sh"
 source "$REPO_DIR/lib/suites.sh"
 source "$REPO_DIR/lib/suggest.sh"

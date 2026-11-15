@@ -7,6 +7,13 @@ confirm() {
   [[ "$ans" =~ ^[sS]$ ]]
 }
 
+ask_yes_no() {
+  local q="$1"
+  local ans
+  read -rp "$q (s/N): " ans
+  [[ "$ans" =~ ^[sS]$ ]]
+}
+
 ask_profile() {
   if confirm "¿Aplicar perfil base?"; then
     PROFILE_BASE=1

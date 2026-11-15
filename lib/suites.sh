@@ -49,6 +49,9 @@ parse_suites() {
       *:*)
         key="${trim%%:*}"
         val="${trim#*:}"
+        # quitar espacios y comillas de los lados
+        val="${val#"${val%%[![:space:]]*}"}"
+        val="${val%"${val##*[![:space:]]}"}"
         val="${val#\"}"
         val="${val%\"}"
         if [[ $indent -eq 2 ]]; then

@@ -3,17 +3,16 @@
 #  log.sh - Logging, colores y UI de progreso
 # =============================================================
 
-# Detectar si la salida es una TTY (para colores)
 if [[ -t 1 ]]; then
-  C_RESET='\033[0m'
-  C_BOLD='\033[1m'
-  C_RED='\033[31m'
-  C_GREEN='\033[32m'
-  C_YELLOW='\033[33m'
-  C_BLUE='\033[34m'
-  C_MAGENTA='\033[35m'
-  C_CYAN='\033[36m'
-  C_WHITE='\033[37m'
+  C_RESET=$'\033[0m'
+  C_BOLD=$'\033[1m'
+  C_RED=$'\033[31m'
+  C_GREEN=$'\033[32m'
+  C_YELLOW=$'\033[33m'
+  C_BLUE=$'\033[34m'
+  C_MAGENTA=$'\033[35m'
+  C_CYAN=$'\033[36m'
+  C_WHITE=$'\033[37m'
 else
   C_RESET='' C_BOLD='' C_RED='' C_GREEN='' C_YELLOW=''
   C_BLUE='' C_MAGENTA='' C_CYAN='' C_WHITE=''
@@ -33,7 +32,7 @@ log() {
   local level="$1"
   shift
   local msg="$*"
-  local color=""
+  local color="$C_WHITE"
   case "$level" in
     INFO) color="$C_BLUE" ;;
     OK) color="$C_GREEN" ;;
@@ -41,19 +40,20 @@ log() {
     ERROR) color="$C_RED" ;;
     DRY-RUN) color="$C_MAGENTA" ;;
     PHASE) color="$C_CYAN" ;;
-    *) color="$C_WHITE" ;;
   esac
   local ts
   ts="$(date '+%Y-%m-%d %H:%M:%S')"
-  printf "%s[%s] [%s]%s %s\n" "$color" "$ts" "$level" "$C_RESET" "$msg" | tee -a "$LOG_FILE"
+  printf '%s[%s] [%s]%s %s\n' "$color" "$ts" "$level" "$C_RESET" "$msg" | tee -a "$LOG_FILE"
 }
 
 phase_header() {
   local title="$1"
-  echo "" | tee -a "$LOG_FILE"
-  printf "%s%s════════════════════════════════════════════════════════════%s\n" "$C_BOLD$C_CYAN" "" "$C_RESET" | tee -a "$LOG_FILE"
-  printf "%s  FASE: %s%s\n" "$C_BOLD$C_CYAN" "$title" "$C_RESET" | tee -a "$LOG_FILE"
-  printf "%s%s════════════════════════════════════════════════════════════%s\n" "$C_BOLD$C_CYAN" "" "$C_RESET" | tee -a "$LOG_FILE"
+  {
+    echo ""
+    printf '%s%s════════════════════════════════════════════════════════════%s\n' "$C_BOLD$C_CYAN" "" "$C_RESET"
+    printf '%s  FASE: %s%s\n' "$C_BOLD$C_CYAN" "$title" "$C_RESET"
+    printf '%s%s════════════════════════════════════════════════════════════%s\n' "$C_BOLD$C_CYAN" "" "$C_RESET"
+  } | tee -a "$LOG_FILE"
 }
 
 progress_bar() {
@@ -61,7 +61,7 @@ progress_bar() {
   local total="$2"
   local label="${3:-Progreso}"
   if [[ $total -le 0 ]]; then
-    printf "\r%s[%s] %s: 100%% %s\n" "$C_GREEN" "$(date '+%H:%M:%S')" "$label" "$(printf '█%.0s' {1..30})" | tee -a "$LOG_FILE"
+    printf '%s[%s] %s: 100%% %s\n' "$C_GREEN" "$(date '+%H:%M:%S')" "$label" "$(printf '█%.0s' {1..30})" | tee -a "$LOG_FILE"
     return 0
   fi
   local pct=$(( current * 100 / total ))
@@ -73,6 +73,6 @@ progress_bar() {
   for ((i=0; i<empty; i++)); do bar+="░"; done
   local color="$C_YELLOW"
   if [[ $pct -ge 100 ]]; then color="$C_GREEN"; fi
-  printf "\r%s[%s] %s: %s %3d%% %s%s" "$C_BOLD" "$(date '+%H:%M:%S')" "$label" "$color$bar$C_RESET" "$pct" "" | tee -a "$LOG_FILE"
+  printf '\r%s[%s] %s: %s %3d%% %s' "$C_BOLD" "$(date '+%H:%M:%S')" "$label" "$color$bar$C_RESET" "$pct" "" | tee -a "$LOG_FILE"
   if [[ $pct -ge 100 ]]; then echo "" | tee -a "$LOG_FILE"; fi
 }
