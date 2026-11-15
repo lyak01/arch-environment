@@ -1,169 +1,132 @@
 # Zynith Reconstructor
 
-> **Reconstruye un entorno Arch Linux completo con mínima intervención.**
+Reconstructor interactivo, selectivo y seguro de un entorno Arch Linux personalizado (Zynith).
 
-Zynith Reconstructor es un script Bash modular que instala paquetes, importa temas, dotfiles y scripts personales, y genera un reporte de diagnóstico final. Está diseñado para Arch Linux (y derivados que usen `pacman`).
-
----
-
-## Características
-
-- Instalación de paquetes desde manifiesto (`manifest/packages.txt`).
-- Instalación de Flatpaks desde manifiesto (`manifest/flatpaks.txt`).
-- Importación de temas desde `zynith-themes` (GTK, iconos, cursores, xfwm4, Plymouth).
-- Importación de dotfiles personales desde `arch-dotfiles` (opcional).
-- Importación de scripts personales desde `personal-scripts` (opcional).
-- Detección de hardware y entorno de escritorio existente.
-- Forzar XFCE (desinstala Plasma/GNOME/Hyprland/i3 con doble confirmación).
-- Plymouth por defecto tras importarlo.
-- Tolerancia a fallos (`--tolerant`): errores se registran y continúa.
-- Checkpoint (reanudación): guarda fases completadas y las salta al reejecutar.
-- Reporte de diagnóstico final con cambios y sugerencias.
-- Logs detallados en `/var/log/arch-reconstructor/`.
-
----
+- Detecta distro, kernel, GPU, audio y entorno existente.
+- Permite elegir u omitir suites y variantes de escritorio.
+- Selección múltiple de paquetes core/recomendados/opcionales y sugerencias personalizadas.
+- No instala nada por defecto: todo requiere confirmación explícita.
+- Instalación en dos fases: repos oficiales (pacman/sudo) y AUR (yay como usuario real, sin sudo interno).
+- Dry-run, tolerancia a fallos, checkpoints y reporte final.
+- Importación de temas Zynith, GRUB, hostname y Plymouth (opcional, con confirmación).
+- Importación de dotfiles y scripts personales (opcional).
+- Ajustes posteriores: panel XFCE automático y Fastfetch mostrando “Zynith”.
+- No manipula servicios/init (`systemctl`/`runit`) por seguridad.
 
 ## Requisitos
 
-- Arch Linux (o derivado con `pacman`).
-- `git`, `curl`, `flatpak` instalados.
-- Acceso a internet.
-- Permisos de `sudo` para instalar paquetes y escribir en `/usr/share/plymouth`.
+- Arch Linux (o derivada compatible con pacman).
+- `git` y `sudo`.
+- Conexión a internet.
+- Para AUR: `yay` (se instala automáticamente en la Fase 1 si falta).
 
----
-
-## Estructura del proyecto
-
-```text
-arch-environment/
-├── bootstrap.sh          # Punto de entrada principal
-├── lib/
-│   ├── log.sh            # Logging
-│   ├── detect.sh         # Detección de hardware/DE
-│   ├── install.sh        # Instalación de paquetes/Flatpaks
-│   ├── themes.sh         # Importación de temas
-│   ├── dotfiles.sh       # Importación de dotfiles/scripts
-│   ├── state.sh          # Checkpoint (reanudación)
-│   └── report.sh         # Reporte de diagnóstico final
-├── manifest/
-│   ├── packages.txt      # Paquetes a instalar
-│   └── flatpaks.txt      # Flatpaks a instalar
-├── docs/
-│   ├── REPORT.md         # Explicación del reporte final
-│   └── RESUME.md         # Explicación de checkpoint/tolerancia
-└── README.md             # Este archivo
-```
-
----
-
-## Ejecutar
-
-### Paso 1: Clonar el repositorio
+## Instalación rápida
 
 ```bash
 git clone https://github.com/lyak01/arch-environment.git
 cd arch-environment
 ```
 
-### Paso 2: Ejecutar (dry-run, recomendado para primera prueba)
+## Ejecución (dry-run)
 
 ```bash
-sudo bash bootstrap.sh --dry-run --tolerant
+sudo bash bootstrap.sh --dry-run --tolerant --fresh
 ```
 
-Esta línea hace:
-- `--dry-run`: no instala nada, solo simula.
-- `--tolerant`: si algo falla, lo registra y continúa.
+- `--dry-run`: simula todo sin instalar ni modificar nada.
+- `--tolerant`: si un paquete falla, lo registra y continúa.
+- `--fresh`: limpia estado y logs previos para una corrida limpia.
 
-### Paso 3: Ejecución real (instala de verdad)
+## Ejecución real
 
 ```bash
-sudo bash bootstrap.sh --tolerant
+sudo bash bootstrap.sh --tolerant --fresh
 ```
 
-### Resumen de comandos (copiar y pegar)
+Durante la ejecución se te pedirá:
 
-**Para dry-run (primera prueba):**
+1. Seleccionar suites (`a` = todas, `n` = ninguna, o números separados por espacio/coma).
+2. Elegir variante de escritorio (xfce/kde/gnome/hyprland/i3/none).
+3. Confirmar reemplazo del entorno existente (si aplica) escribiendo `SI`.
+4. Elegir paquetes core (`s`/`N`) y recomendados/opcionales (multiselección, `a` = todos, `n` = ninguno).
+5. Confirmar la instalación final escribiendo `SI`.
+6. Decidir si importas temas Zynith + GRUB + hostname + Plymouth.
+7. Decidir si importas dotfiles y scripts personales.
 
-```bash
-git clone https://github.com/lyak01/arch-environment.git && cd arch-environment && sudo bash bootstrap.sh --dry-run --tolerant
-```
+## Fases de instalación
 
-**Para ejecución real:**
+### Fase 1 — Repos oficiales (pacman)
 
-```bash
-git clone https://github.com/lyak01/arch-environment.git && cd arch-environment && sudo bash bootstrap.sh --tolerant
-```
+- Clasifica automáticamente los paquetes seleccionados usando una caché de paquetes y grupos (`pacman -Slq` + `pacman -Sgq`).
+- Instala con `sudo pacman -S --needed --noconfirm`.
+- Garantiza que `yay` esté instalado (lo instala desde repos si falta).
+-行行行行 Checkpoint: `packages-repos`.
 
-### Flags disponibles
+### Fase 2 — AUR (yay, sin sudo)
 
-| Flag | Descripción |
-|---|---|
-| `--dry-run` | Simula la instalación sin hacer cambios reales. |
-| `--tolerant` | Errores se registran como `WARN` y el script continúa. |
-| (sin flags) | Comportamiento estricto: cualquier error aborta. |
+- Instala los paquetes que solo existen en AUR usando `yay` como el usuario real (`SUDO_USER`), sin sudo interno.
+- Evita el error `Running makepkg as root is not allowed`.
+- Checkpoint: `packages-aur`.
 
----
+## Normalización automática
 
-## Flujo de ejecución
+Antes de instalar, el programa normaliza paquetes problemáticos:
 
-1. Detecta hardware y entorno de escritorio existente.
-2. Pregunta si forzar XFCE (si hay otro DE).
-3. Instala paquetes del manifiesto.
-4. Instala Flatpaks del manifiesto.
-5. Deduplica paquetes redundantes.
-6. (Solo si no es dry-run) Fuerza XFCE si se confirmó.
-7. Sincroniza e importa temas desde `zynith-themes`.
-8. Configura Plymouth como predeterminado.
-9. Pregunta si importar dotfiles personales.
-10. Pregunta si importar scripts personales.
-11. Genera reporte de diagnóstico final.
+- `ffmpeg7.1` → `ffmpeg` (repos).
+- `pulseeffects` → `easyeffects` (repos).
+- `gwe` → se descarta si la GPU no es NVIDIA.
 
----
+## Temas, GRUB, hostname y Plymouth
 
-## Logs y reportes
+Si aceptas la fase de temas, el programa:
 
-Todo se registra en `/var/log/arch-reconstructor/`:
+1. Clona/actualiza `lyak01/zynith-themes` en `~/.local/share/zynith-themes` (como tu usuario).
+2. Copia temas GTK, iconos y cursores a `~/.themes` y `~/.icons`.
+3. Copia el tema GRUB a `/boot/grub/themes/zynith`, configura `GRUB_THEME` y regenera `grub.cfg`.
+4. Cambia el hostname a `Zynith`.
+5. Instala Plymouth si falta, copia el tema y lo establece como predeterminado.
+6. Asegura que el hook `plymouth` esté en `HOOKS` de `/etc/mkinitcpio.conf` y regenera el initramfs.
 
-- `install-<fecha>.log` — log general.
-- `installed-packages.log` — paquetes instalados.
-- `failed-packages.log` — paquetes que fallaron (solo con `--tolerant`).
-- `failed-flatpaks.log` — Flatpaks que fallaron (solo con `--tolerant`).
-- `themes-imported.log` — temas importados.
-- `dotfiles-imported.log` — dotfiles importados.
-- `scripts-imported.log` — scripts importados.
-- `state.json` — checkpoint (fases completadas).
-- `report-<fecha>.txt` — reporte de diagnóstico final.
+## Dotfiles y ajustes finales
 
----
+Si aceptas importar dotfiles:
+
+1. Clona/actualiza `lyak01/arch-dotfiles` en `~/.local/share/arch-dotfiles` (como tu usuario).
+2. Copia `.config/`, `.bashrc`, `.bash_profile` y `.gitconfig` a tu home.
+3. Ajusta el panel XFCE a modo automático (elimina salida fija tipo `DP-1`).
+4. Configura Fastfetch para mostrar “Zynith” como OS (si la config lo permite).
+
+## Logs y reporte
+
+- Logs en `/var/log/arch-reconstructor/`:
+  - `install-<fecha>.log` — log completo de la corrida.
+  - `installed-packages.log` / `failed-packages.log` — repos oficiales.
+  - `installed-aur.log` / `failed-aur.log` — AUR.
+  - `themes-imported.log`, `dotfiles-imported.log`, `scripts-imported.log`.
+  - `report-<fecha>.txt` — reporte final.
+- Con `--fresh`, los logs de corridas anteriores se eliminan para que el reporte refleje solo la corrida actual.
+
+## Mensaje final
+
+Al terminar, el programa muestra:
+
+- La ruta del reporte generado.
+- Un resumen de paquetes que no se pudieron construir/montar (si aplica), con posibles causas (mirrors, repos, actualizaciones, dependencias, compatibilidad) y recomendación de instalación manual.
+- El mensaje: **“Disfruta Zynith Distro :) -lyak01”**.
+
+## Solución de problemas
+
+- **`pacman db.lck`**: asegúrate de que no haya otra transacción de pacman/yay en curso antes de eliminar el lock.
+- **AUR falla con “makepkg as root”**: el programa ya ejecuta AUR como usuario real; si ves ese error, reporta el log.
+- **Plymouth no aparece en mkinitcpio**: el programa ahora inserta el hook `plymouth` en `HOOKS` y regenera el initramfs.
+- **Panel no aparece**: el programa resetea la salida fija del panel para que sea automática.
 
 ## Seguridad
 
-- El programa **no modifica `systemctl` ni init systems** por seguridad.
-- Las sugerencias del reporte son solo informativas; el usuario decide si actúa.
-- Forzar XFCE requiere doble confirmación explícita.
-
----
-
-## FAQ
-
-**¿Puedo usarlo en Debian/Ubuntu/Fedora?**
-No por ahora. El soporte multi-distro está descartado para el plazo inmediato/mediano.
-
-**¿Qué pasa si un paquete no existe?**
-Con `--tolerant`, se registra como `WARN` y continúa. Sin `--tolerant`, aborta.
-
-**¿Puedo reanudar una instalación interrumpida?**
-Sí. El checkpoint guarda fases completadas y las salta al reejecutar.
-
-**¿Dónde veo qué falló?**
-En el reporte final (`report-<fecha>.txt`) y en los logs `failed-*.log`.
-
----
+- No se manipulan servicios ni sistemas de init (`systemctl`/`runit`).
+- Toda acción destructiva (desinstalar entorno previo, instalar paquetes, cambiar GRUB/hostname/Plymouth) requiere confirmación explícita.
+- El dry-run no modifica nada.
 
 ## Créditos
 
-- Zynith Reconstructor: diseño e implementación (Lyak).
-- zynith-themes: temas GTK, iconos, cursores, xfwm4, Plymouth (Lyak).
-- arch-dotfiles: dotfiles personales (Lyak).
-- personal-scripts: scripts personales (Lyak).
+Diseño y desarrollo: **lyak01** — Zynith Distro.
