@@ -11,19 +11,37 @@ normalize_package() {
   case "$p" in
     ffmpeg7.1) echo "ffmpeg" ;;
     pulseeffects) echo "easyeffects" ;;
-    gwe) echo "" ;;  # solo NVIDIA, se descarta si GPU no es NVIDIA
+    gwe) echo "" ;;
     *) echo "$p" ;;
   esac
+}
+
+# Construye caché de paquetes y grupos de repos oficiales
+build_repo_cache() {
+  REPO_CACHE_FILE="$LOG_DIR/repo-cache.txt"
+  if [[ ! -f "$REPO_CACHE_FILE" ]]; then
+    {
+      pacman -Slq 2>/dev/null
+      pacman -Sgq 2>/dev/null
+    } | sort -u > "$REPO_CACHE_FILE"
+  fi
+  log "INFO" "Caché de repos construida ($(wc -l < "$REPO_CACHE_FILE") entradas)."
+}
+
+is_in_repo() {
+  local p="$1"
+  grep -qx "$p" "$REPO_CACHE_FILE"
 }
 
 split_packages() {
   REPO_PKGS=()
   AUR_PKGS=()
+  build_repo_cache
   local p norm
   for p in "${SELECTED_PACKAGES[@]}"; do
     norm="$(normalize_package "$p")"
     [[ -z "$norm" ]] && continue
-    if pacman -Si "$norm" &>/dev/null; then
+    if is_in_repo "$norm"; then
       REPO_PKGS+=("$norm")
     else
       AUR_PKGS+=("$norm")
@@ -92,7 +110,7 @@ install_aur_pkgs() {
     return 1
   fi
   if [[ $DRY_RUN -eq 1 ]]; then
-    log "DRY-RUN" "Se instalarían con yay (como usuario $SUDO_USER): ${AUR_PKGS[*]}"
+    log "DRY-RUN" "Se instalarían con yay (como usuario ${SUDO_USER:-$USER}): ${AUR_PKGS[*]}"
     return 0
   fi
   local total=${#AUR_PKGS[@]}
