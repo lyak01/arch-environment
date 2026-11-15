@@ -3,6 +3,33 @@
 
 USER_HOME="/home/${SUDO_USER:-$USER}"
 
+# Ajustes posteriores a la importación: panel automático y fastfetch Zynith
+tune_desktop() {
+  # Panel XFCE: quitar salida fija (DP-1) para que sea automática
+  if command -v xfconf-query &>/dev/null; then
+    if sudo -u "${SUDO_USER:-$USER}" env DISPLAY=:0 xfconf-query -c xfce4-panel -p /panels/panel-1/output-name -r &>/dev/null; then
+      log "OK" "Panel XFCE configurado en modo automático."
+    else
+      log "INFO" "No se encontró salida fija en el panel; se mantiene automático."
+    fi
+  else
+    log "WARN" "xfconf-query no disponible; el panel se ajustará al primer inicio."
+  fi
+
+  # Fastfetch: mostrar Zynith como OS si la config lo menciona
+  local ff="$USER_HOME/.config/fastfetch/config.jsonc"
+  if [[ -f "$ff" ]]; then
+    if grep -q 'Arch Linux' "$ff"; then
+      sed -i 's/Arch Linux/Zynith/g' "$ff"
+      log "OK" "Fastfetch configurado para mostrar Zynith como OS."
+    else
+      log "INFO" "Fastfetch: no se encontró 'Arch Linux' en la config; se deja tal cual."
+    fi
+  else
+    log "INFO" "No se encontró config de fastfetch; se creará al primer uso."
+  fi
+}
+
 import_dotfiles() {
   local dir="$USER_HOME/.local/share/arch-dotfiles"
   if [[ -d "$dir/.git" ]]; then
@@ -35,6 +62,7 @@ import_dotfiles() {
       chown "${SUDO_USER:-$USER}:${SUDO_USER:-$USER}" "$USER_HOME/$f"
     fi
   done
+  tune_desktop
   echo "dotfiles importados" >> "$LOG_DIR/dotfiles-imported.log"
   mark_phase_done "dotfiles"
   log "OK" "Dotfiles importados a $USER_HOME"
