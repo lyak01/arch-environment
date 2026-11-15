@@ -16,6 +16,17 @@ normalize_package() {
   esac
 }
 
+# Omite paquetes que entrarían en conflicto con el sistema actual
+should_skip_package() {
+  local p="$1"
+  # easyeffects requiere pipewire-pulse; si hay pulseaudio, omitir para no romper el audio
+  if [[ "$p" == "easyeffects" ]] && pacman -Q pulseaudio &>/dev/null; then
+    log "WARN" "Omitiendo easyeffects: requiere pipewire-pulse y el sistema usa pulseaudio."
+    return 0
+  fi
+  return 1
+}
+
 # Construye caché de paquetes y grupos de repos oficiales
 build_repo_cache() {
   REPO_CACHE_FILE="$LOG_DIR/repo-cache.txt"
@@ -30,7 +41,14 @@ build_repo_cache() {
 
 is_in_repo() {
   local p="$1"
-  grep -qx "$p" "$REPO_CACHE_FILE"
+  if grep -qx "$p" "$REPO_CACHE_FILE"; then
+    return 0
+  fi
+  # Fallback: algunos paquetes pueden no aparecer en la caché
+  if pacman -Si "$p" &>/dev/null; then
+    return 0
+  fi
+  return 1
 }
 
 split_packages() {
@@ -41,6 +59,9 @@ split_packages() {
   for p in "${SELECTED_PACKAGES[@]}"; do
     norm="$(normalize_package "$p")"
     [[ -z "$norm" ]] && continue
+    if should_skip_package "$norm"; then
+      continue
+    fi
     if is_in_repo "$norm"; then
       REPO_PKGS+=("$norm")
     else
