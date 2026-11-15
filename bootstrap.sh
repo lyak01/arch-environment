@@ -2,7 +2,7 @@
 # =============================================================
 #  Zynith Reconstructor - bootstrap.sh
 #  Punto de entrada principal
-#  v3.0.3 - Fix: source ask.sh, colores, comillas
+#  v3.1.0 - GRUB + hostname + Plymouth en fase de temas
 # =============================================================
 
 set -euo pipefail
@@ -26,21 +26,10 @@ FORCE_XFCE=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --dry-run)
-      DRY_RUN=1
-      shift
-      ;;
-    --tolerant)
-      TOLERANT=1
-      shift
-      ;;
-    --fresh)
-      FRESH=1
-      shift
-      ;;
-    *)
-      shift
-      ;;
+    --dry-run) DRY_RUN=1; shift ;;
+    --tolerant) TOLERANT=1; shift ;;
+    --fresh) FRESH=1; shift ;;
+    *) shift ;;
   esac
 done
 
@@ -98,13 +87,15 @@ if [[ $DRY_RUN -eq 0 ]]; then
 fi
 
 if ! resume_if_done "themes"; then
-  if ask_yes_no "¿Importar temas Zynith (GTK, iconos, cursores, Plymouth)?"; then
+  if ask_yes_no "¿Importar temas Zynith, GRUB, hostname y Plymouth?"; then
     if [[ $DRY_RUN -eq 1 ]]; then
-      log "DRY-RUN" "Se importarían temas Zynith."
+      log "DRY-RUN" "Se importarían temas Zynith, GRUB, hostname y Plymouth."
     else
       sync_themes
       import_themes
       import_xfwm4
+      import_grub
+      set_hostname
       import_plymouth
       mark_phase_done "themes"
     fi
