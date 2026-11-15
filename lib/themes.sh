@@ -87,11 +87,24 @@ set_hostname() {
   else
     echo "$newname" > /etc/hostname
   fi
-  if [[ -f /etc/hosts ]]; then
-    sed -i "s/\b$(hostname -s 2>/dev/null || echo 'localhost')\b/$newname/g" /etc/hosts 2>/dev/null || true
-  fi
   echo "hostname $newname" >> "$LOG_DIR/themes-imported.log"
   log "OK" "Hostname cambiado a $newname."
+}
+
+# Asegura que el hook plymouth esté en HOOKS de mkinitcpio
+ensure_plymouth_hook() {
+  local conf="/etc/mkinitcpio.conf"
+  if grep -qE '^HOOKS=.*plymouth' "$conf"; then
+    log "INFO" "Hook plymouth ya presente en mkinitcpio."
+    return 0
+  fi
+  if grep -q '^HOOKS=' "$conf"; then
+    sed -i '/^HOOKS=/s/filesystems/plymouth filesystems/' "$conf"
+    log "OK" "Hook plymouth añadido a HOOKS en $conf"
+  else
+    log "WARN" "No se encontró línea HOOKS en $conf."
+    return 1
+  fi
 }
 
 import_plymouth() {
@@ -109,7 +122,8 @@ import_plymouth() {
   fi
   mkdir -p /usr/share/plymouth/themes/zynith
   cp -r "$src/"* /usr/share/plymouth/themes/zynith/
+  ensure_plymouth_hook
   plymouth-set-default-theme -R zynith
   echo "plymouth zynith" >> "$LOG_DIR/themes-imported.log"
-  log "OK" "Plymouth Zynith configurado como predeterminado."
+  log "OK" "Plymouth Zynith configurado como predeterminado e initramfs regenerado."
 }

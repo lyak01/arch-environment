@@ -2,7 +2,7 @@
 # =============================================================
 #  Zynith Reconstructor - bootstrap.sh
 #  Punto de entrada principal
-#  v3.1.0 - GRUB + hostname + Plymouth en fase de temas
+#  v3.1.1 - Limpieza de logs por corrida + mensaje final de UX
 # =============================================================
 
 set -euo pipefail
@@ -36,7 +36,12 @@ done
 init_log
 if [[ $FRESH -eq 1 ]]; then
   rm -f "$LOG_DIR/state.json"
-  log "INFO" "Estado previo eliminado (--fresh)."
+  rm -f "$LOG_DIR/installed-packages.log" "$LOG_DIR/failed-packages.log" \
+        "$LOG_DIR/installed-aur.log" "$LOG_DIR/failed-aur.log" \
+        "$LOG_DIR/installed-flatpaks.log" "$LOG_DIR/failed-flatpaks.log" \
+        "$LOG_DIR/themes-imported.log" "$LOG_DIR/dotfiles-imported.log" \
+        "$LOG_DIR/scripts-imported.log"
+  log "INFO" "Estado y logs previos eliminados (--fresh)."
 fi
 init_state
 log "INFO" "Iniciando Zynith Reconstructor..."
@@ -129,4 +134,22 @@ if ! resume_if_done "scripts"; then
 fi
 
 generate_report
+log "OK" "Reporte generado: $(ls -t "$LOG_DIR"/report-*.txt 2>/dev/null | head -n1)"
+
+# Mensaje final de UX con resumen de fallos
+local_failed=0
+if [[ -s "$LOG_DIR/failed-packages.log" ]]; then
+  local_failed=$((local_failed + $(wc -l < "$LOG_DIR/failed-packages.log")))
+fi
+if [[ -s "$LOG_DIR/failed-aur.log" ]]; then
+  local_failed=$((local_failed + $(wc -l < "$LOG_DIR/failed-aur.log")))
+fi
+if [[ $local_failed -gt 0 ]]; then
+  log "WARN" "$local_failed paquete(s) no se pudieron construir/montar."
+  log "WARN" "Posibles causas: mirrors, repos, actualizaciones, dependencias o compatibilidad."
+  log "WARN" "Se recomienda instalación manual de los paquetes listados en failed-packages.log y failed-aur.log."
+else
+  log "OK" "Todos los paquetes se instalaron correctamente."
+fi
+log "OK" "Disfruta Zynith Distro :) -lyak01"
 log "OK" "Proceso completado."
